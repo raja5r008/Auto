@@ -1,0 +1,37 @@
+import paramiko
+import time
+import sys
+import os
+
+t1=int(input("enter how long your DUT for a full reboot cycle (in seconds)"))
+t2=int(input("enter how many time your DUT is to be rebooted"))
+r=paramiko.SSHClient()
+
+#to check ping
+def pingcheck(hostname):
+    test1 = os.system('ping -c 1 '+hostname)
+    print(test1)
+    if test1 == 0:
+        print("network active")
+    else:
+        print('network inactive')
+
+sys.stdout = open("test.txt", "w")
+i=1
+
+#Reboot main script
+while i<t2+1:
+    r.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+    r.connect("192.168.1.1", 22, "root", "root", look_for_keys=False, allow_agent=False)
+    
+    stdin, stdout, stderr = r.exec_command("uci show version")
+    out=stdout.readlines()
+    print(out)
+    pingcheck('192.168.1.1')
+    r.exec_command("ls")
+    time.sleep(2)
+    r.exec_command("rtfd")
+    time.sleep(t1)
+    i=i+1
+
+sys.stdout.close()
